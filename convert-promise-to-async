@@ -1,0 +1,70 @@
+function middleware(req, res, next) {
+    let { reqId, ...body } = req.body;
+    // Created promise from request body
+    let descriptionPromise = JsonReader(body); // Asynchronous call returns a promise
+    // Sequential Step
+    // 1. Create description from Body(JSON)
+    // 2. Execute mathOperation function
+    descriptionPromise
+        .then((descriptionString) => {
+            req.body.description = descriptionString;
+            return runMathOperation(descriptionString); // Asynchronous call returns a promise
+        })
+        .then((stdout, _stderr) => {
+            req.body.stdout = stdout.stdout;
+            next();
+        })
+        .catch((err) => {
+            let parseErr = {};
+            parseErr['reqId'] = reqId;
+            if (err.stdout[0] === '*') {
+                err = err.stdout.slice(22);
+                parseErr['errorMsg'] = err;
+                res.status(450); //Math Error
+                res.statusMessage = 'MathError';
+            } else {
+                res.statusMessage = 'ServerError';
+                parseErr['errorMsg'] = err;
+                res.status(500);
+            }
+            res.send(parseErr);
+        });
+}
+
+// Converted to Async Await
+    async function middlewareAsync(req, res, next) {
+        const { reqId, ...body } = req.body;
+        req.body.description = await JsonReader(body).catch((_e) => res.status(500).send('Parse Error'));
+        try {
+            const stdOut = await runMathOperation(req.body.description);
+            req.body.stdout = stdOut.stdout;
+            next();
+        } catch (err) {
+            const parseErr = {
+                reqId,
+                errorMsg: null,
+            };
+            if (err.stdout[0] === '*') {
+                err = err.stdout.slice(22);
+                parseErr.errorMsg = err;
+                res.status(450);
+                res.statusMessage = 'MathError';
+            } else {
+                res.statusMessage = 'ServerError';
+                res.status(500);
+                parseErr.errorMsg = err;
+            }
+            res.send(parseErr);
+        }
+    }
+
+
+async function JsonReader(_body: any) {
+}
+
+
+async function runMathOperation(_descriptionString: any) {
+    return {
+        stdout: ['something']
+    }
+};
