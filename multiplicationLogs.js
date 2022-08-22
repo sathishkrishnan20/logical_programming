@@ -17,7 +17,7 @@ function isCarryAvailable(number) {
     return String(number).split('').length === 2;
 }
 
-function multiplicationAlog(multiplicand = 100, multiplier = 150) {
+function multiplicationAlog(multiplicand, multiplier) {
     const aSplit = String(multiplier).split('');
     const bSplit = String(multiplicand).split('');
     let step = 0;
